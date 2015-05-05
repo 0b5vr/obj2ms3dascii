@@ -24,7 +24,7 @@ end
 -- load .obj
 objPath = arg[1]
 if objPath == nil then
-	print( "This script needs .obj file!\nUsage : > obj2ms3dascii.lua cube.obj" )
+	print( "This script needs .obj file!\nUsage : > obj2ms3dascii.lua cube.obj cube.txt\n" )
 	os.exit()
 else
 	objFile = io.open( objPath, "r" )
@@ -120,29 +120,18 @@ indexUsage[3] = not not tonumber( split( objects[1]["f"][1][1], "/" )[3] ) -- vn
 
 -- obj v/vt to ms3dascii vertex
 vertices["ms"] = {}
+vertexIndex = {}
 
 -- attribute vertices with textureCoods
-if indexUsage[2] then
-	for iVertex, vVertex in ipairs( vertices["v"] ) do
-		uvFound = false
-		for iObject, vObject in ipairs( objects ) do
-			for iFace, vFace in ipairs( vObject["f"] ) do
-				for iIndex, vIndex in ipairs( vFace ) do
-					ind = split( vIndex, "/" )
-					if tonumber( ind[1] ) == iVertex then
-						table.insert( vertices["ms"], { vVertex[1], vVertex[2], vVertex[3], vertices["vt"][tonumber(ind[2])][1], vertices["vt"][tonumber(ind[2])][2] } ) -- x, y, z, u, v
-						uvFound = true
-					end
-					if uvFound then break end
-				end
-				if uvFound then break end
+for iObject, vObject in ipairs( objects ) do
+	for iFace, vFace in ipairs( vObject["f"] ) do
+		for iIndex, vIndex in ipairs( vFace ) do
+			if not vertexIndex[vIndex] then
+				ind = split( vIndex, "/" )
+				table.insert( vertices["ms"], { vertices["v"][tonumber(ind[1])][1], vertices["v"][tonumber(ind[1])][2], vertices["v"][tonumber(ind[1])][3], vertices["vt"][tonumber(ind[2])][1], vertices["vt"][tonumber(ind[2])][2] } ) -- x, y, z, u, v
+				vertexIndex[vIndex] = #vertices["ms"]
 			end
-			if uvFound then break end
 		end
-	end
-else
-	for iVertex, vVertex in ipairs( vertices["v"] ) do
-		table.insert( vertices["ms"], { vVertex[1], vVertex[2], vVertex[3], 0.0, 0.0 } ) -- x, y, z, u, v
 	end
 end
 
@@ -216,7 +205,7 @@ for iObject, vObject in ipairs( objects ) do
 			ind[1] = split( vFace[1], "/" )
 			ind[2] = split( vFace[2], "/" )
 			ind[3] = split( vFace[3], "/" )
-			out = out .. string.format( "0 %d %d %d %d %d %d 1\n", ind[1][1]-1, ind[2][1]-1, ind[3][1]-1, ind[1][3]-1, ind[2][3]-1, ind[3][3]-1 );
+			out = out .. string.format( "0 %d %d %d %d %d %d 1\n", vertexIndex[vFace[1]]-1, vertexIndex[vFace[2]]-1, vertexIndex[vFace[3]]-1, ind[1][3]-1, ind[2][3]-1, ind[3][3]-1 );
 		end
 	else
 		for iFace, vFace in ipairs( vObject["f"] ) do
@@ -224,7 +213,7 @@ for iObject, vObject in ipairs( objects ) do
 			ind[1] = split( vFace[1], "/" )
 			ind[2] = split( vFace[2], "/" )
 			ind[3] = split( vFace[3], "/" )
-			out = out .. string.format( "0 %d %d %d %d %d %d 1\n", ind[1][1]-1, ind[2][1]-1, ind[3][1]-1, iFace-1, iFace-1, iFace-1 );
+			out = out .. string.format( "0 %d %d %d %d %d %d 1\n", vertexIndex[vFace[1]]-1, vertexIndex[vFace[2]]-1, vertexIndex[vFace[3]]-1, iFace-1, iFace-1, iFace-1 );
 		end
 	end
 end
@@ -248,4 +237,6 @@ MaterialComments: 0
 BoneComments: 0
 ModelComment: 0]]
 
-print( out )
+outFile = io.open( objPath .. ".txt", "w" )
+outFile:write( out )
+outFile:close();
