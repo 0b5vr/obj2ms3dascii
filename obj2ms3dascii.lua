@@ -128,7 +128,11 @@ for iObject, vObject in ipairs( objects ) do
 		for iIndex, vIndex in ipairs( vFace ) do
 			if not vertexIndex[vIndex] then
 				ind = split( vIndex, "/" )
-				table.insert( vertices["ms"], { vertices["v"][tonumber(ind[1])][1], vertices["v"][tonumber(ind[1])][2], vertices["v"][tonumber(ind[1])][3], vertices["vt"][tonumber(ind[2])][1], vertices["vt"][tonumber(ind[2])][2] } ) -- x, y, z, u, v
+				if indexUsage[2] then
+					table.insert( vertices["ms"], { vertices["v"][tonumber(ind[1])][1], vertices["v"][tonumber(ind[1])][2], vertices["v"][tonumber(ind[1])][3], vertices["vt"][tonumber(ind[2])][1], vertices["vt"][tonumber(ind[2])][2] } ) -- x, y, z, u, v
+				else
+					table.insert( vertices["ms"], { vertices["v"][tonumber(ind[1])][1], vertices["v"][tonumber(ind[1])][2], vertices["v"][tonumber(ind[1])][3], 0.0, 0.0 } ) -- x, y, z, u, v
+				end
 				vertexIndex[vIndex] = #vertices["ms"]
 			end
 		end
