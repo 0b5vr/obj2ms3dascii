@@ -24,7 +24,7 @@ end
 -- load .obj
 objPath = arg[1]
 if objPath == nil then
-	print( "This script needs .obj file!\nUsage : > obj2ms3dascii.lua cube.obj cube.txt\n" )
+	print( "This script needs .obj file!\nUsage : > obj2ms3dascii.lua cube.obj\n" )
 	os.exit()
 else
 	objFile = io.open( objPath, "r" )
@@ -169,7 +169,8 @@ end
 
 -- write ms3dascii
 out = [[// MilkShape 3D ASCII
-// Converted from .obj by obj2ms3dascii.lua
+// Converted from .obj with obj2ms3dascii.lua by FMS_Cat
+// https://github.com/FMS-Cat/obj2ms3dascii
 Frames: 30
 Frame: 1
 ]]
@@ -240,7 +241,6 @@ GroupComments: 0
 MaterialComments: 0
 BoneComments: 0
 ModelComment: 0]]
-
 outFile = io.open( objPath .. ".txt", "w" )
 outFile:write( out )
 outFile:close();
