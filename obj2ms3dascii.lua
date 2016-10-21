@@ -11,7 +11,7 @@ function split( _str, _sep )
 	local ret = {}
 	local pat = "(.-)" .. _sep .. "()"
 	local lastPos
-	for part, pos in string.gfind( _str, pat ) do
+	for part, pos in string.gmatch( _str, pat ) do
 		table.insert( ret, part )
 		lastPos = pos
 	end
@@ -236,7 +236,15 @@ for iMaterial, vMaterial in ipairs( materials ) do
 	out = out .. string.format( "\"%s\"\n", vMaterial["map_d"] )
 end
 
-out = out .. [[Bones: 0
+out = out .. [[Bones: 1
+"Bone01"
+""
+0 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+1
+1.000000 0.000000 0.000000 0.000000
+1
+1.000000 0.000000 0.000000 0.000000
+
 GroupComments: 0
 MaterialComments: 0
 BoneComments: 0
