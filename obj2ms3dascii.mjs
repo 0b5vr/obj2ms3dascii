@@ -15,7 +15,7 @@ export function obj2ms3dascii( obj, mtl ) {
   let currentObject = null;
   const objects = [];
 
-  let mtlPath = null;
+  // let mtlPath = null;
 
   if ( obj == null ) {
     throw new Error( 'obj2ms3dascii: No obj file detected' );
@@ -25,7 +25,7 @@ export function obj2ms3dascii( obj, mtl ) {
     const li = line.split( ' ' );
 
     if ( li[ 0 ] === 'mtllib' ) {
-      mtlPath = li[ 1 ];
+      // mtlPath = li[ 1 ];
     } else if ( li[ 0 ] === 'o' ) {
       currentObject = {
         name: li[ 1 ],
@@ -33,14 +33,21 @@ export function obj2ms3dascii( obj, mtl ) {
       };
       objects.push( currentObject );
     } else if ( li[ 0 ] === 'v' ) {
-      vertices.v.push( [ li[ 1 ], li[ 2 ], li[ 3 ] ] );
+      const vertex = [ li[ 1 ], li[ 2 ], li[ 3 ] ].map( ( v ) => parseFloat( v ) );
+      vertices.v.push( vertex );
     } else if ( li[ 0 ] === 'vt' ) {
-      vertices.vt.push( [ li[ 1 ], li[ 2 ] ] );
+      const vertexUv = [ li[ 1 ], li[ 2 ] ].map( ( v ) => parseFloat( v ) );
+      vertices.vt.push( vertexUv );
     } else if ( li[ 0 ] === 'vn' ) {
-      vertices.vn.push( [ li[ 1 ], li[ 2 ], li[ 3 ] ] );
+      const vertexNormal = [ li[ 1 ], li[ 2 ], li[ 3 ] ].map( ( v ) => parseFloat( v ) );
+      vertices.vn.push( vertexNormal );
     } else if ( li[ 0 ] === 'f' ) {
+      // `f 1//1 2//1 4//1 3//1`
       for ( let iLi = 3; iLi < li.length; iLi ++ ) {
-        currentObject.f.push( [ li[ 1 ], li[ iLi - 1 ], li[ iLi ] ] );
+        const face = [ li[ 1 ], li[ iLi - 1 ], li[ iLi ] ].map(
+          ( i ) => i.split( '/' ).map( ( i ) => i !== '' ? parseInt( i ) : null )
+        );
+        currentObject.f.push( face );
       }
     } else if ( li[ 0 ] === 'usemtl' ) {
       currentObject.usemtl = li[ 1 ];
@@ -61,12 +68,12 @@ export function obj2ms3dascii( obj, mtl ) {
     if ( li[ 0 ] === 'newmtl' ) {
       currentMaterial = {
         name: li[ 1 ],
-        Ka: [ '0.000', '0.000', '0.000' ],
-        Kd: [ '0.000', '0.000', '0.000' ],
-        Ks: [ '0.000', '0.000', '0.000' ],
-        Ke: [ '0.000', '0.000', '0.000' ],
-        Ns: '0.000',
-        d: '0.000',
+        Ka: [ 0, 0, 0 ],
+        Kd: [ 0, 0, 0 ],
+        Ks: [ 0, 0, 0 ],
+        Ke: [ 0, 0, 0 ],
+        Ns: 0,
+        d: 0,
         map_Kd: '',
         map_d: '',
       };
@@ -91,26 +98,25 @@ export function obj2ms3dascii( obj, mtl ) {
   } );
 
   // -- check obj index usage ----------------------------------------------------------------------
-  const firstFace = objects[ 0 ].f[ 0 ][ 0 ].split( '/' );
+  const firstIndices = objects[ 0 ].f[ 0 ][ 0 ];
   const indexUsage = [
-    firstFace[ 0 ] !== '', // v
-    firstFace[ 1 ] !== '', // vt
-    firstFace[ 2 ] !== '', // vn
+    firstIndices[ 0 ] != null, // v
+    firstIndices[ 1 ] != null, // vt
+    firstIndices[ 2 ] != null, // vn
   ];
 
   // -- obj v/vt to ms3dascii vertex ---------------------------------------------------------------
   vertices.ms = [];
-  const vertexIndex = {};
+  const indexKeyMap = new Map();
 
   // attribute vertices with textureCoords
   objects.forEach( ( object ) => {
     object.f.forEach( ( face ) => {
       face.forEach( ( index ) => {
-        if ( vertexIndex[ index ] == null ) {
-          const ind = index.split( '/' ).map( ( char ) => parseInt( char ) - 1 );
-
-          const xyz = vertices.v[ ind[ 0 ] ];
-          const uv = indexUsage[ 1 ] ? vertices.vt[ ind[ 1 ] ] : [ 0.0, 0.0 ];
+        const indexKey = index.join( '/' );
+        if ( indexKeyMap[ indexKey ] == null ) {
+          const xyz = vertices.v[ index[ 0 ] - 1 ];
+          const uv = indexUsage[ 1 ] ? vertices.vt[ index[ 1 ] - 1 ] : [ 0.0, 0.0 ];
 
           vertices.ms.push( [
             xyz[ 0 ],
@@ -120,7 +126,7 @@ export function obj2ms3dascii( obj, mtl ) {
             uv[ 1 ],
           ] );
 
-          vertexIndex[ index ] = vertices.ms.length - 1;
+          indexKeyMap[ indexKey ] = vertices.ms.length - 1;
         }
       } );
     } );
@@ -138,8 +144,7 @@ export function obj2ms3dascii( obj, mtl ) {
     objects.forEach( ( object, iObject ) => {
       vertices.msn[ iObject ] = [];
       object.f.forEach( ( face ) => {
-        const vf = face.map( ( facev ) => parseInt( facev.split( '/' )[ 0 ] ) );
-        const v = vf.map( ( vfv ) => vertices.v[ vf[ vfv ] ] ).map( ( v ) => parseFloat( v ) );
+        const v = face.map( ( i ) => vertices.v[ i[ 0 ] ] );
 
         const a = [
           v[ 1 ][ 0 ] - v[ 0 ][ 0 ],
@@ -198,12 +203,11 @@ Frame: 1
     out += `${ object.f.length }\n`;
     if ( indexUsage[ 2 ] ) {
       object.f.forEach( ( face ) => {
-        const fvs = face.map( ( f ) => f.split( '/' ).map( ( v ) => parseInt( v ) ) );
-        out += `0 ${ face.map( ( f ) => vertexIndex[ f ] ).join( ' ' ) } ${ fvs.map( ( fv ) => fv[ 2 ] - 1 ).join( ' ' ) } 1\n`;
+        out += `0 ${ face.map( ( index ) => indexKeyMap[ index.join( '/' ) ] ).join( ' ' ) } ${ face.map( ( index ) => index[ 2 ] - 1 ).join( ' ' ) } 1\n`;
       } );
     } else {
       object.f.forEach( ( face, iFace ) => {
-        out += `0 ${ face.map( ( f ) => vertexIndex[ f ] ).join( ' ' ) } ${ iFace } ${ iFace } ${ iFace } 1\n`;
+        out += `0 ${ face.map( ( index ) => indexKeyMap[ index.join( '/' ) ] ).join( ' ' ) } ${ iFace } ${ iFace } ${ iFace } 1\n`;
       } );
     }
   } );
@@ -211,10 +215,10 @@ Frame: 1
   out += `Materials: ${ materials.length }\n`;
   materials.forEach( ( material ) => {
     out += `"${ material.name }"
-${ material.Ka.join( ' ' ) } 1.000000
-${ material.Kd.join( ' ' ) } 1.000000
-${ material.Ks.join( ' ' ) } 1.000000
-${ material.Ke.join( ' ' ) } 1.000000
+${ material.Ka.join( ' ' ) } 1
+${ material.Kd.join( ' ' ) } 1
+${ material.Ks.join( ' ' ) } 1
+${ material.Ke.join( ' ' ) } 1
 ${ material.Ns }
 ${ material.d }
 "${ material.map_Kd }"
@@ -225,11 +229,11 @@ ${ material.d }
   out += `Bones: 1
 "Bone01"
 ""
-0 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+0 0 0 0 0 0 0
 1
-1.000000 0.000000 0.000000 0.000000
+1 0 0 0
 1
-1.000000 0.000000 0.000000 0.000000
+1 0 0 0
 
 GroupComments: 0
 MaterialComments: 0
