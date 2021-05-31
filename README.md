@@ -2,13 +2,7 @@
 
 Wavefront .obj to Milkshape 3d Ascii conversion script
 
-## usage
-
-```
-lua obj2ms3dascii.lua yourmodel.obj
-```
-
-(`yourmodel.mtl` should also be existed in the same directory)
+https://fms-cat.com/obj2ms3dascii/
 
 ## some information
 

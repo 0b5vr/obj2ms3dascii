@@ -1,0 +1,20 @@
+name: deploy
+on:
+  push:
+    branches:
+      - release
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Prepare pages
+      shell: bash
+      run: |
+        mkdir pages
+        mv index.html obj2ms3dascii.mjs pages
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./pages
