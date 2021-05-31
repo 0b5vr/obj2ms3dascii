@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<head>
+  <title>obj2ms3dascii</title>
+</head>
+
+<body>
+  DnD obj and mtl file
+</body>
+
+<script type="module">
+  import { obj2ms3dascii } from './obj2ms3dascii.mjs';
+
+  function save( buffer, name ) {
+    const blob = new Blob( [ buffer ] );
+    const url = URL.createObjectURL( blob );
+
+    const a = document.createElement( 'a' );
+    a.href = url;
+    a.download = name;
+    a.target = '_blank';
+    a.click();
+
+    URL.revokeObjectURL( a );
+  }
+
+  window.addEventListener( 'dragover', ( event ) => {
+    event.preventDefault();
+  } );
+
+  window.addEventListener( 'drop', ( event ) => {
+    event.preventDefault();
+
+    const files = Array.from( event.dataTransfer.files );
+
+    const objFile = files.find( ( file ) => file.name.endsWith( '.obj' ) );
+    const mtlFile = files.find( ( file ) => file.name.endsWith( '.mtl' ) );
+
+    if ( objFile == null || mtlFile == null ) {
+      throw new Error( 'obj and mtl file is required' );
+    }
+
+    Promise.all( [ objFile.text(), mtlFile.text() ] ).then( ( [ obj, mtl ] ) => {
+      const ms3dascii = obj2ms3dascii( obj, mtl );
+      save( ms3dascii, objFile.name + '.txt' );
+    } );
+
+  //   const blob = new Blob( [ file ] );
+  //   blob.arrayBuffer().then( ( buffer ) => {
+
+  //     meshAddMorph( buffer, 'Neutral' );
+  //     morphSubMorph( buffer, 'Angry', 'Neutral' );
+  //     morphSubMorph( buffer, 'Joy', 'Neutral' );
+  //     morphSubMorph( buffer, 'Sorrow', 'Neutral' );
+  //     morphSubMorph( buffer, 'Fun', 'Neutral' );
+  //     morphSubMorph( buffer, 'Surprised', 'Neutral' );
+  //     morphSubMorph( buffer, 'Neutral', 'Neutral' );
+
+  //     save( buffer, `${ file.name }-${ Date.now() }.vrm` );
+  //   } );
+  } );
+</script>
