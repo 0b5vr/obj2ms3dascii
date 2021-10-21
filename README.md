@@ -2,7 +2,7 @@
 
 Wavefront .obj to Milkshape 3d Ascii conversion script
 
-https://fms-cat.com/obj2ms3dascii/
+https://0b5vr.com/obj2ms3dascii/
 
 ## some information
 
