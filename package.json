@@ -1,0 +1,10 @@
+{
+  "name": "obj2ms3dascii",
+  "version": "0.0.1",
+  "description": "Wavefront .obj to Milkshape 3d Ascii conversion script",
+  "main": "index.mjs",
+  "repository": "git@github.com:0b5vr/obj2ms3dascii.git",
+  "author": "0b5vr",
+  "license": "MIT",
+  "private": false
+}

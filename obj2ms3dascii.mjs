@@ -171,8 +171,8 @@ export function obj2ms3dascii( obj, mtl ) {
 
   // -- write ms3dascii ----------------------------------------------------------------------------
   let out = `// MilkShape 3D ASCII
-// Converted from .obj with obj2ms3dascii.lua by FMS_Cat
-// https://github.com/FMS-Cat/obj2ms3dascii
+// Converted from .obj with obj2ms3dascii.lua by 0b5vr
+// https://github.com/0b5vr/obj2ms3dascii
 Frames: 30
 Frame: 1
 `;
