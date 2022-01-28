@@ -13,7 +13,7 @@ export function obj2ms3dascii( obj, mtl ) {
   };
 
   let currentObject = null;
-  const objects = [];
+  const unfiltered_objects = [];
 
   // let mtlPath = null;
 
@@ -26,12 +26,12 @@ export function obj2ms3dascii( obj, mtl ) {
 
     if ( li[ 0 ] === 'mtllib' ) {
       // mtlPath = li[ 1 ];
-    } else if ( li[ 0 ] === 'o' ) {
+    } else if ( li[ 0 ] === 'o' || li[ 0 ] === 'g' ) {
       currentObject = {
         name: li[ 1 ],
         f: [],
       };
-      objects.push( currentObject );
+      unfiltered_objects.push( currentObject );
     } else if ( li[ 0 ] === 'v' ) {
       const vertex = [ li[ 1 ], li[ 2 ], li[ 3 ] ].map( ( v ) => parseFloat( v ) );
       vertices.v.push( vertex );
@@ -53,6 +53,8 @@ export function obj2ms3dascii( obj, mtl ) {
       currentObject.usemtl = li[ 1 ];
     }
   } );
+  
+  const objects = unfiltered_objects.filter((x) => x.f.length > 0);
 
   // -- read .mtl ----------------------------------------------------------------------------------
   // if ( mtlPath == null ) {
