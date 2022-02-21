@@ -21,7 +21,7 @@ export function obj2ms3dascii( obj, mtl ) {
     /** @type {string | null} */
     usemtl: null,
 
-    /** @type {number[]} */
+    /** @type {number[][][]} */
     f: [],
   };
   const unfilteredMeshes = [ currentMesh ]; // it can have object which does not have faces
