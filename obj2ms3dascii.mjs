@@ -1,6 +1,7 @@
 /**
  * Import an obj model and export as a ms3dascii model.
- * Ref : Need some help with Milkshape 3D ascii format - http://www.gamedev.net/topic/464065-need-some-help-with-milkshape-3d-ascii-format/
+ * Ref: https://github.com/DNS/imbalance/blob/master/libms3d/src/MilkShape%203D%20ASCII.txt
+ *
  * @param {string} obj The entire file of the obj
  * @param {string} mtl The entire file of the mtl
  */
@@ -12,8 +13,18 @@ export function obj2ms3dascii( obj, mtl ) {
     vn: [],
   };
 
-  let currentObject = null;
-  const unfilteredObjects = []; // all found objects before being filtered to remove "invalid" objects
+  /** "mesh" in milkshape 3d term. one name, one material */
+  let currentMesh = {
+    /** @type {string | null} */
+    name: null,
+
+    /** @type {string | null} */
+    usemtl: null,
+
+    /** @type {number[]} */
+    f: [],
+  };
+  const unfilteredMeshes = [ currentMesh ]; // it can have object which does not have faces
 
   // let mtlPath = null;
 
@@ -26,12 +37,15 @@ export function obj2ms3dascii( obj, mtl ) {
 
     if ( li[ 0 ] === 'mtllib' ) {
       // mtlPath = li[ 1 ];
-    } else if ( li[ 0 ] === 'o' || li[ 0 ] === 'g' ) {
-      currentObject = {
-        name: li[ 1 ],
-        f: [],
-      };
-      unfilteredObjects.push( currentObject );
+    } else if ( li[ 0 ] === 'o' ) {
+      if ( currentMesh.name !== li[ 1 ] ) {
+        currentMesh = {
+          name: li[ 1 ],
+          usemtl: currentMesh.usemtl,
+          f: [],
+        }
+        unfilteredMeshes.push( currentMesh );
+      }
     } else if ( li[ 0 ] === 'v' ) {
       const vertex = [ li[ 1 ], li[ 2 ], li[ 3 ] ].map( ( v ) => parseFloat( v ) );
       vertices.v.push( vertex );
@@ -47,15 +61,23 @@ export function obj2ms3dascii( obj, mtl ) {
         const face = [ li[ 1 ], li[ iLi - 1 ], li[ iLi ] ].map(
           ( i ) => i.split( '/' ).map( ( i ) => i !== '' ? parseInt( i, 10 ) : null )
         );
-        currentObject.f.push( face );
+        currentMesh.f.push( face );
       }
     } else if ( li[ 0 ] === 'usemtl' ) {
-      currentObject.usemtl = li[ 1 ];
+      if ( currentMesh.usemtl !== li[ 1 ] ) {
+        currentMesh = {
+          name: currentMesh.name,
+          usemtl: li[ 1 ],
+          f: [],
+        }
+        unfilteredMeshes.push( currentMesh );
+      }
+      currentMesh.usemtl = li[ 1 ];
     }
   } );
-  
-  // Filter out "invalid" objects
-  const objects = unfilteredObjects.filter( ( x ) => x.f.length > 0 );
+
+  // Filter out meshes without faces
+  const meshes = unfilteredMeshes.filter( ( x ) => x.f.length > 0 );
 
   // -- read .mtl ----------------------------------------------------------------------------------
   // if ( mtlPath == null ) {
@@ -101,7 +123,7 @@ export function obj2ms3dascii( obj, mtl ) {
   } );
 
   // -- check obj index usage ----------------------------------------------------------------------
-  const firstIndices = objects[ 0 ].f[ 0 ][ 0 ];
+  const firstIndices = meshes[ 0 ].f[ 0 ][ 0 ];
   const indexUsage = [
     firstIndices[ 0 ] != null, // v
     firstIndices[ 1 ] != null, // vt
@@ -113,8 +135,8 @@ export function obj2ms3dascii( obj, mtl ) {
   const indexKeyMap = new Map();
 
   // attribute vertices with textureCoords
-  objects.forEach( ( object ) => {
-    object.f.forEach( ( face ) => {
+  meshes.forEach( ( mesh ) => {
+    mesh.f.forEach( ( face ) => {
       face.forEach( ( index ) => {
         const indexKey = index.join( '/' );
         if ( indexKeyMap[ indexKey ] == null ) {
@@ -144,9 +166,9 @@ export function obj2ms3dascii( obj, mtl ) {
     } );
   } else {
     // auto generate normals by face direction
-    objects.forEach( ( object, iObject ) => {
+    meshes.forEach( ( mesh, iObject ) => {
       vertices.msn[ iObject ] = [];
-      object.f.forEach( ( face ) => {
+      mesh.f.forEach( ( face ) => {
         const v = face.map( ( i ) => vertices.v[ i[ 0 ] ] );
 
         const a = [
@@ -180,11 +202,11 @@ Frames: 30
 Frame: 1
 `;
 
-  out += `Meshes: ${ objects.length }\n`;
+  out += `Meshes: ${ meshes.length }\n`;
 
-  objects.forEach( ( object, iObject ) => {
-    const materialIndex = materials.findIndex( ( material ) => material.name === object.usemtl );
-    out += `"${ object.name }" 0 ${ materialIndex }\n`;
+  meshes.forEach( ( mesh, iObject ) => {
+    const materialIndex = materials.findIndex( ( material ) => material.name === mesh.usemtl );
+    out += `"${ mesh.name }" 0 ${ materialIndex }\n`;
 
     out += `${ vertices.ms.length }\n`;
     vertices.ms.forEach( ( vertex ) => {
@@ -203,13 +225,13 @@ Frame: 1
       } );
     }
 
-    out += `${ object.f.length }\n`;
+    out += `${ mesh.f.length }\n`;
     if ( indexUsage[ 2 ] ) {
-      object.f.forEach( ( face ) => {
+      mesh.f.forEach( ( face ) => {
         out += `0 ${ face.map( ( index ) => indexKeyMap[ index.join( '/' ) ] ).join( ' ' ) } ${ face.map( ( index ) => index[ 2 ] - 1 ).join( ' ' ) } 1\n`;
       } );
     } else {
-      object.f.forEach( ( face, iFace ) => {
+      mesh.f.forEach( ( face, iFace ) => {
         out += `0 ${ face.map( ( index ) => indexKeyMap[ index.join( '/' ) ] ).join( ' ' ) } ${ iFace } ${ iFace } ${ iFace } 1\n`;
       } );
     }
