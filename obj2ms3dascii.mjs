@@ -13,7 +13,7 @@ export function obj2ms3dascii( obj, mtl ) {
   };
 
   let currentObject = null;
-  const unfilteredObjects = [];
+  const unfilteredObjects = []; // all found objects before being filtered to remove "invalid" objects
 
   // let mtlPath = null;
 
@@ -31,7 +31,7 @@ export function obj2ms3dascii( obj, mtl ) {
         name: li[ 1 ],
         f: [],
       };
-      unfiltered_objects.push( currentObject );
+      unfilteredObjects.push( currentObject );
     } else if ( li[ 0 ] === 'v' ) {
       const vertex = [ li[ 1 ], li[ 2 ], li[ 3 ] ].map( ( v ) => parseFloat( v ) );
       vertices.v.push( vertex );
@@ -54,7 +54,8 @@ export function obj2ms3dascii( obj, mtl ) {
     }
   } );
   
-  const objects = unfiltered_objects.filter( ( x ) => x.f.length > 0 );
+  // Filter out "invalid" objects
+  const objects = unfilteredObjects.filter( ( x ) => x.f.length > 0 );
 
   // -- read .mtl ----------------------------------------------------------------------------------
   // if ( mtlPath == null ) {
