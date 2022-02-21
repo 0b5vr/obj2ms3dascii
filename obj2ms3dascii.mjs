@@ -45,7 +45,7 @@ export function obj2ms3dascii( obj, mtl ) {
       // `f 1//1 2//1 4//1 3//1`
       for ( let iLi = 3; iLi < li.length; iLi ++ ) {
         const face = [ li[ 1 ], li[ iLi - 1 ], li[ iLi ] ].map(
-          ( i ) => i.split( '/' ).map( ( i ) => i !== '' ? parseInt( i ) : null )
+          ( i ) => i.split( '/' ).map( ( i ) => i !== '' ? parseInt( i, 10 ) : null )
         );
         currentObject.f.push( face );
       }
