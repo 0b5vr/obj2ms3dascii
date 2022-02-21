@@ -13,7 +13,7 @@ export function obj2ms3dascii( obj, mtl ) {
   };
 
   let currentObject = null;
-  const unfiltered_objects = [];
+  const unfilteredObjects = [];
 
   // let mtlPath = null;
 
@@ -54,7 +54,7 @@ export function obj2ms3dascii( obj, mtl ) {
     }
   } );
   
-  const objects = unfiltered_objects.filter((x) => x.f.length > 0);
+  const objects = unfiltered_objects.filter( ( x ) => x.f.length > 0 );
 
   // -- read .mtl ----------------------------------------------------------------------------------
   // if ( mtlPath == null ) {
